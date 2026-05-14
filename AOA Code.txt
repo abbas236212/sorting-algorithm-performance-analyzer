@@ -1,0 +1,187 @@
+import time
+
+
+# ============================================================
+# Sorting Algorithm Performance Checker
+# ============================================================
+
+TEST_DATA = {
+    "5 values - already sorted": [1, 2, 3, 4, 5],
+    "5 values - reverse order": [5, 4, 3, 2, 1],
+    "100 values - already sorted": list(range(1, 101)),
+    "100 values - reverse order": list(range(100, 0, -1))
+}
+
+
+# ------------------------------------------------------------
+# Selection Sort
+# ------------------------------------------------------------
+def selection_method(values):
+    total_comparisons = 0
+    total_swaps = 0
+
+    for current_pos in range(len(values)):
+        smallest_pos = current_pos
+
+        for check_pos in range(current_pos + 1, len(values)):
+            total_comparisons += 1
+
+            if values[check_pos] < values[smallest_pos]:
+                smallest_pos = check_pos
+
+        if smallest_pos != current_pos:
+            values[current_pos], values[smallest_pos] = values[smallest_pos], values[current_pos]
+            total_swaps += 1
+
+    return total_comparisons, total_swaps
+
+
+# ------------------------------------------------------------
+# Bubble Sort
+# ------------------------------------------------------------
+def bubble_method(values):
+    total_comparisons = 0
+    total_swaps = 0
+    length = len(values)
+
+    for pass_no in range(length - 1):
+        changed = False
+
+        for index in range(length - pass_no - 1):
+            total_comparisons += 1
+
+            if values[index] > values[index + 1]:
+                values[index], values[index + 1] = values[index + 1], values[index]
+                total_swaps += 1
+                changed = True
+
+        if not changed:
+            break
+
+    return total_comparisons, total_swaps
+
+
+# ------------------------------------------------------------
+# Insertion Sort
+# ------------------------------------------------------------
+def insertion_method(values):
+    total_comparisons = 0
+    total_shifts = 0
+
+    for position in range(1, len(values)):
+        selected_value = values[position]
+        previous = position - 1
+
+        while previous >= 0:
+            total_comparisons += 1
+
+            if values[previous] > selected_value:
+                values[previous + 1] = values[previous]
+                total_shifts += 1
+                previous -= 1
+            else:
+                break
+
+        values[previous + 1] = selected_value
+
+    return total_comparisons, total_shifts
+
+
+# ------------------------------------------------------------
+# Merge Sort
+# ------------------------------------------------------------
+def merge_method(values):
+    record = {
+        "comparisons": 0,
+        "writes": 0
+    }
+
+    def divide_and_merge(items):
+        if len(items) <= 1:
+            return items
+
+        center = len(items) // 2
+        left_part = divide_and_merge(items[:center])
+        right_part = divide_and_merge(items[center:])
+
+        merged = []
+        left_index = 0
+        right_index = 0
+
+        while left_index < len(left_part) and right_index < len(right_part):
+            record["comparisons"] += 1
+
+            if left_part[left_index] <= right_part[right_index]:
+                merged.append(left_part[left_index])
+                left_index += 1
+            else:
+                merged.append(right_part[right_index])
+                right_index += 1
+
+            record["writes"] += 1
+
+        while left_index < len(left_part):
+            merged.append(left_part[left_index])
+            left_index += 1
+            record["writes"] += 1
+
+        while right_index < len(right_part):
+            merged.append(right_part[right_index])
+            right_index += 1
+            record["writes"] += 1
+
+        return merged
+
+    sorted_items = divide_and_merge(values)
+    values[:] = sorted_items
+
+    return record["comparisons"], record["writes"]
+
+
+# ------------------------------------------------------------
+# Experiment Runner
+# ------------------------------------------------------------
+def calculate_average_time(sort_function, data, rounds=3):
+    time_values = []
+    final_comparisons = 0
+    final_writes = 0
+
+    for _ in range(rounds):
+        copied_data = data.copy()
+
+        start = time.perf_counter()
+        final_comparisons, final_writes = sort_function(copied_data)
+        end = time.perf_counter()
+
+        time_values.append(end - start)
+
+    average = sum(time_values) / rounds
+    return average, final_comparisons, final_writes
+
+
+def show_result(algorithm_name, case_name, sort_function, space_info):
+    avg_time, comparisons, writes = calculate_average_time(sort_function, TEST_DATA[case_name])
+
+    print(f"Algorithm: {algorithm_name}")
+    print(f"Input Case: {case_name}")
+    print(f"Average Running Time: {avg_time:.8f} seconds")
+    print(f"Number of Comparisons: {comparisons}")
+    print(f"Swaps/Writes/Shifts: {writes}")
+    print(f"Extra Space Used: {space_info}")
+    print("=" * 45)
+
+
+def run_all_tests():
+    algorithms = [
+        ("Selection Sort", selection_method, "O(1)"),
+        ("Bubble Sort", bubble_method, "O(1)"),
+        ("Insertion Sort", insertion_method, "O(1)"),
+        ("Merge Sort", merge_method, "O(n)")
+    ]
+
+    for algorithm_name, function, space in algorithms:
+        for case_name in TEST_DATA:
+            show_result(algorithm_name, case_name, function, space)
+
+
+run_all_tests()
